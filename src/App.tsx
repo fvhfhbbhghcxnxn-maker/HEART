@@ -18,7 +18,8 @@ import {
   query, 
   orderBy, 
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  setDoc
 } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
@@ -32,12 +33,7 @@ interface Memory {
 }
 
 export default function App() {
-  const [yesSize, setYesSize] = useState(1);
-  const [noSize, setNoSize] = useState(1);
-  const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
-  const [isAccepted, setIsAccepted] = useState(true);
   const [showShareToast, setShowShareToast] = useState(false);
-  const [noCount, setNoCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -139,7 +135,6 @@ export default function App() {
   const handleUpdateMusic = async (url: string) => {
     if (!isAdmin) return;
     try {
-      const { setDoc } = await import("firebase/firestore");
       await setDoc(doc(db, "settings", "backgroundMusic"), {
         url: url,
         updatedAt: serverTimestamp()
@@ -161,12 +156,6 @@ export default function App() {
     }
   };
 
-  const noCountLimit = 5;
-  const noHidden = noCount >= noCountLimit;
-  const loveLabels = ["Dostluq", "Maraq", "Heyranlıq", "Sevgi", "Eşq", "Dəlilik"];
-  const currentLabel = isAccepted ? loveLabels[loveLabels.length - 1] : loveLabels[Math.min(noCount, loveLabels.length - 1)];
-  const progress = isAccepted ? 100 : Math.min((noCount / noCountLimit) * 100, 100);
-
   // Sound effects
   const playSound = (url: string) => {
     const audio = new Audio(url);
@@ -181,64 +170,10 @@ export default function App() {
     fireworks: "https://assets.mixkit.co/sfx/preview/mixkit-fireworks-bang-and-crackle-2986.mp3"
   };
 
-  // Move the "NO" button to a random position
-  const moveNoButton = () => {
-    if (noHidden || !containerRef.current) return;
-    
-    playSound(sounds.whoosh);
-    
-    const container = containerRef.current.getBoundingClientRect();
-    const buttonWidth = 120;
-    const buttonHeight = 50;
-    
-    const maxX = container.width - buttonWidth;
-    const maxY = container.height - buttonHeight;
-    
-    // Random position within the container
-    const newX = Math.random() * maxX - (container.width / 2 - buttonWidth / 2);
-    const newY = Math.random() * maxY - (container.height / 2 - buttonHeight / 2);
-    
-    setNoPosition({ x: newX, y: newY });
-    setNoCount(prev => prev + 1);
-    setIsPlaying(true);
-    
-    // Increase YES size and decrease NO size
-    setYesSize(prev => prev + 0.4);
-    setNoSize(prev => Math.max(0.1, prev - 0.15));
-  };
-
-  const handleYesClick = () => {
-    setIsAccepted(true);
-    setIsPlaying(true);
-    playSound(sounds.pop);
-    playSound(sounds.celebration);
-    playSound(sounds.fireworks);
-    
-    // Trigger confetti
-    const duration = 5 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
-
-    const interval: any = setInterval(function() {
-      const timeLeft = animationEnd - Date.now();
-
-      if (timeLeft <= 0) {
-        return clearInterval(interval);
-      }
-
-      const particleCount = 20 * (timeLeft / duration);
-      // since particles fall down, start a bit higher than random
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-    }, 400);
-  };
-
   const handleShare = async () => {
     const shareData = {
-      title: "Fəzilə üçün özəl hədiyyə ❤️",
-      text: "Bu özəl hədiyyəyə baxın! ❤️",
+      title: "Fəzilə üçün hədiyyə ❤️",
+      text: "Bu hədiyyəyə baxın! ❤️",
       url: window.location.href,
     };
 
@@ -461,15 +396,13 @@ export default function App() {
 
       {/* Flash effect on acceptance */}
       <AnimatePresence>
-        {isAccepted && (
-          <motion.div
-            key="flash"
-            initial={{ opacity: 0.8 }}
-            animate={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-            className="absolute inset-0 bg-white z-[60] pointer-events-none"
-          />
-        )}
+        <motion.div
+          key="flash"
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 1.5 }}
+          className="absolute inset-0 bg-white z-[60] pointer-events-none"
+        />
       </AnimatePresence>
 
       {/* Video Background */}
@@ -766,7 +699,7 @@ export default function App() {
                           )}
                         </div>
                         <div className={`mt-4 text-center font-romantic font-bold text-lg ${[3, 4, 5, 6, 7].includes(i) ? "text-pink-600 scale-110" : "text-pink-500"}`}>
-                          {[3, 4, 5, 6, 7].includes(i) ? "✨ ÖZƏL XATİRƏ ✨" : `❤️ Xatirə #${i + 1}`}
+                          {`❤️ Xatirə #${i + 1}`}
                         </div>
                       </motion.div>
                     ))}
@@ -1016,8 +949,8 @@ export default function App() {
                 <div className="space-y-6 mb-8">
                   {/* Video URL Input */}
                   <div className="space-y-2">
-                    <label className="text-pink-400 text-[10px] font-black uppercase tracking-[0.2em] ml-1">
-                      YOUTUBEDEN MAHNIN LİNKİ GOTUR YAPŞDIR
+                    <label className="text-white/60 text-xs font-bold uppercase tracking-widest ml-1">
+                      Video URL (YouTube və ya birbaşa link)
                     </label>
                     <div className="flex gap-2">
                       <input 
