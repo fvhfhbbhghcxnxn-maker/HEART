@@ -513,23 +513,23 @@ export default function App() {
       {/* Content Overlay */}
       <div className="relative z-10 flex flex-col items-center w-full h-full px-4 text-center">
         <AnimatePresence mode="wait">
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            ref={successRef}
-            id="success-screen"
-            className="absolute inset-0 flex flex-col items-center gap-8 w-full px-4 py-20 overflow-y-auto custom-scrollbar z-30 scroll-smooth"
-          >
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-                className="text-white/70 text-xs font-bold tracking-[0.3em] uppercase"
-              >
-                ILY NƏDİ?
-              </motion.p>
-              <motion.div
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              ref={successRef}
+              id="success-screen"
+              className="absolute inset-0 flex flex-col items-center gap-8 w-full px-4 py-20 overflow-y-auto custom-scrollbar z-30 scroll-smooth"
+            >
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="text-white font-black text-[14px] tracking-[0.4em] uppercase"
+                >
+                  ILY NƏDİ?
+                </motion.p>
+                <motion.div
                 animate={{ 
                   scale: [1, 1.3, 1]
                 }}
