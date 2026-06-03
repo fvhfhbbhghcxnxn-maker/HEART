@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: memories
+    // Fields:
+    //   - url: string (required)
+    //   - type: string (required, 'image' or 'video')
+    //   - createdAt: timestamp (required)
+    //   - authorUid: string (required)
+    //
+    // Collection: users
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "fvhfhbbhghcxnxn@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(authorUid) {
+      return isAuthenticated() && request.auth.uid == authorUid;
+    }
+
+    function isValidMemory(data) {
+      return data.url is string && data.url.size() < 2000 &&
+             data.type in ['image', 'video'] &&
+             data.category in ['original', 'dynamic'] &&
+             data.createdAt is timestamp &&
+             data.authorUid == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /memories/{memoryId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidMemory(request.resource.data) && (
+        (request.resource.data.category == 'original' && isAdmin()) ||
+        (request.resource.data.category == 'dynamic')
+      );
+      allow update: if isAuthenticated() && isValidMemory(request.resource.data) && (
+        (request.resource.data.category == 'original' && isAdmin()) ||
+        (request.resource.data.category == 'dynamic' && (isOwner(resource.data.authorUid) || isAdmin()))
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && isOwner(resource.data.authorUid));
+    }
+  }
+}

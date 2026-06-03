@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "Memory": {
+      "title": "Memory",
+      "description": "A photo or video memory added to the proposal.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the photo or video."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["image", "video"],
+          "description": "The type of memory."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["original", "dynamic"],
+          "description": "Which book the memory belongs to."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the memory was added."
+        },
+        "authorUid": {
+          "type": "string",
+          "description": "The UID of the user who added the memory."
+        }
+      },
+      "required": ["url", "type", "createdAt", "authorUid"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"]
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/memories/{memoryId}": {
+      "schema": "Memory",
+      "description": "Collection of memories."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/settings/{settingId}": {
+      "schema": "object",
+      "description": "Global app settings."
+    }
+  }
+}
